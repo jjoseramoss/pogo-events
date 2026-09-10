@@ -12,6 +12,7 @@ export default function HomePage() {
   const [error, setError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
 
+  // Filter by Categories selected
   const filteredEvents = events.filter((event) => {
     if (selectedCategories.length <= 0) {
       return true;
@@ -19,10 +20,22 @@ export default function HomePage() {
       if (selectedCategories.includes(event.eventType)) {
         return true;
       }
-
       return false;
     }
   });
+
+  // Sort by earliest start time
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    return getStartTime(a.start) - getStartTime(b.start);
+  });
+
+  // Helper function for sorting events
+  function getStartTime(value: string | null | undefined) {
+    const time = value ? new Date(value).getTime() : NaN;
+
+    return Number.isNaN(time) ? Infinity : time;
+  }
+
   function handleToggleCategory(category: string) {
     // implement adding/removing category
     // Check if category inside selected Categories
@@ -63,6 +76,22 @@ export default function HomePage() {
 
     loadData();
   }, []); // Load this page’s event feed when it mounts.
+
+  function formatEventDate(time: string | null | undefined) {
+    if (!time) return "Not announced";
+
+    const date = new Date(time);
+
+    if (Number.isNaN(date.getTime())) return "Date unavailable";
+
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+    }).format(date);
+  }
 
   return (
     <div>
@@ -171,73 +200,42 @@ export default function HomePage() {
               </div>
             </div>
             <section className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {selectedCategories.length <= 0 &&
-                events.map((event) => (
-                  <article
-                    key={event.eventID}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-md"
-                  >
-                    <div className="aspect-[16/9] overflow-hidden bg-neutral/30">
-                      <img
-                        src={event.image}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-1 flex-col p-6">
-                      <span className="self-start rounded-md bg-gold/30 px-2.5 py-1 text-xs font-bold text-ink">
-                        {event.heading}
-                      </span>
-                      <h3 className="mt-4 text-xl font-bold leading-snug tracking-tight">
-                        {event.name}
-                      </h3>
-                      <a
-                        href={event.link}
-                        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
-                        aria-label={`Read details for ${event.name} on LeekDuck`}
-                      >
-                        Event details <span aria-hidden="true">↗</span>
-                      </a>
-                    </div>
-                  </article>
-                ))}
-              {filteredEvents.length <= 0 && (
-                <p className="text-ink">
-                  No event match your selected categories
-                </p>
-              )}
-              {selectedCategories.length >= 1 &&
-                filteredEvents.map((event) => (
-                  <article
-                    key={event.eventID}
-                    className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-md"
-                  >
-                    <div className="aspect-[16/9] overflow-hidden bg-neutral/30">
-                      <img
-                        src={event.image}
-                        alt=""
-                        loading="lazy"
-                        className="h-full w-full object-cover"
-                      />
-                    </div>
-                    <div className="flex flex-1 flex-col p-6">
-                      <span className="self-start rounded-md bg-gold/30 px-2.5 py-1 text-xs font-bold text-ink">
-                        {event.heading}
-                      </span>
-                      <h3 className="mt-4 text-xl font-bold leading-snug tracking-tight">
-                        {event.name}
-                      </h3>
-                      <a
-                        href={event.link}
-                        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
-                        aria-label={`Read details for ${event.name} on LeekDuck`}
-                      >
-                        Event details <span aria-hidden="true">↗</span>
-                      </a>
-                    </div>
-                  </article>
-                ))}
+              {sortedEvents.map((event) => (
+                <article
+                  key={event.eventID}
+                  className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-md"
+                >
+                  <div className="aspect-[16/9] overflow-hidden bg-neutral/30">
+                    <img
+                      src={event.image}
+                      alt=""
+                      loading="lazy"
+                      className="h-full w-full object-cover"
+                    />
+                  </div>
+                  <div className="flex flex-1 flex-col p-6">
+                    <span className="self-start rounded-md bg-gold/30 px-2.5 py-1 text-xs font-bold text-ink">
+                      {event.heading}
+                    </span>
+                    <h3 className="mt-4 text-xl font-bold leading-snug tracking-tight">
+                      {event.name}
+                    </h3>
+                    <span className="text-sm">
+                      Start: {formatEventDate(event.start)}
+                    </span>
+                    <span className="text-sm">
+                      End: {formatEventDate(event.end)}
+                    </span>
+                    <a
+                      href={event.link}
+                      className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
+                      aria-label={`Read details for ${event.name} on LeekDuck`}
+                    >
+                      Event details <span aria-hidden="true">↗</span>
+                    </a>
+                  </div>
+                </article>
+              ))}
             </section>
           </div>
         )}
