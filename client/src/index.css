@@ -1,1 +1,42 @@
+@import url("https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Pixelify+Sans:wght@400;500;600;700&display=swap");
 @import "tailwindcss";
+
+/* Representative colors sampled from Jose's textured reference image.
+   Surface, normal text, border, and accent-ink are supporting shades. */
+@theme {
+  --font-sans: "DM Sans", sans-serif;
+  --font-pixel: "Pixelify Sans", monospace;
+  --color-paper: #f3f4ef;
+  --color-surface: #fcfcf9;
+  --color-ink: #45464d;
+  --color-muted: #63656b;
+  --color-accent: #e36042;
+  --color-accent-ink: #a13c26;
+  --color-gold: #edbc6b;
+  --color-neutral: #c5c5c5;
+  --color-line: #dedfd8;
+}
+
+@layer base {
+  body {
+    margin: 0;
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  button, a {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent-ink);
+    outline-offset: 4px;
+  }
+
+  ::selection {
+    background: var(--color-gold);
+    color: var(--color-ink);
+  }
+}
