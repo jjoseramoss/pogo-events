@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { getEventData } from "../services/events.ts";
 import type { PogoEvent } from "../services/events.ts";
 import { cleanEventName } from "../util/functions.tsx";
-
+import { createStartReminder } from "../util/calendar.ts";
 import CategoryFilter from "../components/CategoryFilter.tsx";
 
 export default function HomePage() {
@@ -11,6 +11,14 @@ export default function HomePage() {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+
+  const [now, setNow] = useState(() => Date.now());
+
+  // Keep the sections current while the page stays open, without refetching.
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   // Filter by Categories selected
   const filteredEvents = events.filter((event) => {
@@ -28,6 +36,23 @@ export default function HomePage() {
   const sortedEvents = [...filteredEvents].sort((a, b) => {
     return getStartTime(a.start) - getStartTime(b.start);
   });
+
+  const happeningNow = sortedEvents.filter((event) => {
+    const start = event.start ? Date.parse(event.start) : NaN;
+    const end = event.end ? Date.parse(event.end) : NaN;
+    return start <= now && end > now;
+  });
+
+  const upcomingEvents = sortedEvents.filter((event) => {
+    const start = event.start ? Date.parse(event.start) : NaN;
+    const end = event.end ? Date.parse(event.end) : NaN;
+    return start > now && (!Number.isFinite(end) || end > start);
+  });
+
+  const eventSections = [
+    { id: "happening-now", title: "Happening Now", events: happeningNow, allowReminder: false },
+    { id: "upcoming-events", title: "Upcoming Events", events: upcomingEvents, allowReminder: true },
+  ];
 
   // Helper function for sorting events
   function getStartTime(value: string | null | undefined) {
@@ -93,6 +118,41 @@ export default function HomePage() {
     }).format(date);
   }
 
+  function handleAddToCalender(event: PogoEvent) {
+    try {
+      const calendarText = createStartReminder(event);
+
+      const file = new Blob([calendarText], {
+        type: "text/calendar;charset=utf-8",
+      });
+
+      const downloadUrl = URL.createObjectURL(file);
+      const anchor = document.createElement("a");
+
+      anchor.href = downloadUrl;
+      anchor.download = "pokemon-go-start-reminder.ics";
+
+      try {
+        document.body.appendChild(anchor);
+        anchor.click();
+      } finally {
+        anchor.remove();
+
+        //Give browser time to begin using file before releasing it.
+        window.setTimeout(() => {
+          URL.revokeObjectURL(downloadUrl);
+        }, 1000);
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Couldn't download the calendar reminder.";
+
+      window.alert(message);
+    }
+  }
+
   return (
     <div>
       <section className="flex flex-col items-center relative overflow-hidden rounded-3xl border border-line bg-surface px-6 py-10 sm:px-10 sm:py-14 md:flex-row md:justify-around">
@@ -143,13 +203,13 @@ export default function HomePage() {
           </div>
           {!isLoading && !error && (
             <span className="rounded-full bg-gold/30 px-3 py-1 text-sm font-medium">
-              {events.length} in the feed
+              {happeningNow.length + upcomingEvents.length} matching events
             </span>
           )}
         </div>
         <p className="mt-4 text-sm leading-6 text-muted">
-          From LeekDuck via ScrapedDuck. The feed may include recently ended
-          events; check each listing for its dates.
+          From LeekDuck via ScrapedDuck. Ended events are hidden. Events without
+          enough date information to determine their status may not appear.
         </p>
 
         {isLoading ? (
@@ -199,8 +259,19 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
-            <section className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {sortedEvents.map((event) => (
+            {eventSections.map((section) => (
+              <section key={section.id} className="mt-8 w-full" aria-labelledby={section.id}>
+                <div className="flex items-center gap-3 border-b border-line pb-3">
+                  <h3 id={section.id} className="text-xl font-bold tracking-tight">{section.title}</h3>
+                  <span className="text-sm text-muted">{section.events.length}</span>
+                </div>
+                {section.events.length === 0 ? (
+                  <p className="py-6 text-sm text-muted">
+                    {section.allowReminder ? "No upcoming events match your filters." : "No events happening now match your filters."}
+                  </p>
+                ) : (
+                  <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {section.events.map((event) => (
                 <article
                   key={event.eventID}
                   className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-md"
@@ -217,26 +288,40 @@ export default function HomePage() {
                     <span className="self-start rounded-md bg-gold/30 px-2.5 py-1 text-xs font-bold text-ink">
                       {event.heading}
                     </span>
-                    <h3 className="mt-4 text-xl font-bold leading-snug tracking-tight">
+                    <h4 className="mt-4 text-xl font-bold leading-snug tracking-tight">
                       {event.name}
-                    </h3>
+                    </h4>
                     <span className="text-sm">
                       Start: {formatEventDate(event.start)}
                     </span>
                     <span className="text-sm">
                       End: {formatEventDate(event.end)}
                     </span>
-                    <a
-                      href={event.link}
-                      className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
-                      aria-label={`Read details for ${event.name} on LeekDuck`}
-                    >
-                      Event details <span aria-hidden="true">↗</span>
-                    </a>
+                    <div className="flex justify-between mt-auto">
+                      <a
+                        href={event.link}
+                        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
+                        aria-label={`Read details for ${event.name} on LeekDuck`}
+                      >
+                        Event details <span aria-hidden="true">↗</span>
+                      </a>
+                      {section.allowReminder && (
+                      <button
+                        type="button"
+                        onClick={() => handleAddToCalender(event)}
+                        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
+                      >
+                        Add start reminder <span aria-hidden="true">📅</span>
+                      </button>
+                      )}
+                    </div>
                   </div>
                 </article>
               ))}
-            </section>
+                  </div>
+                )}
+              </section>
+            ))}
           </div>
         )}
       </section>

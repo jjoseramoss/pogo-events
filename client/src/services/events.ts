@@ -1,6 +1,5 @@
 export async function getEventData() {
-  const url =
-    "https://raw.githubusercontent.com/bigfoott/ScrapedDuck/data/events.json";
+  const url = "/api/events";
 
   try {
     const response = await fetch(url);

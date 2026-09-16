@@ -1,10 +1,10 @@
 import express from "express";
-
+import path from "node:path";
+import { getEventData } from "./services/events.js";
+import { fileURLToPath } from "node:url";
 const app = express();
-const port = 3000;
+const port = Number(process.env.PORT) || 3000;
 
-const url =
-  "https://raw.githubusercontent.com/bigfoott/ScrapedDuck/data/events.json";
 app.get("/api/health", (req, res) => {
   // send response
   res.json({ status: "ok" });
@@ -13,21 +13,30 @@ app.get("/api/health", (req, res) => {
 app.get("/api/events", async (req, res) => {
   // await fetching function
   try {
-    const response = await fetch(url);
-
-    if (!response.ok) {
-      throw new Error(`Response status: ${response.status}`);
-    }
-
-    const result = await response.json();
-
-    res.json(result);
-  } catch (err) {
+    const events = await getEventData();
+    res.json(events);
+  } catch (error) {
+    console.log(error);
     res.status(502).json({ error: "Unable to retrieve events" });
   }
   // send result using res.json(...)
 });
-app.listen(port, () => {
+
+app.use("/api", (_req, res) => {
+  res.status(404).json({ error: "API route not found" });
+}); // Close the API handler here.
+
+const clientDist = fileURLToPath(
+  new URL("../../client/dist/", import.meta.url),
+);
+
+app.use(express.static(clientDist));
+
+app.get("/{*path}", (_req, res) => {
+  res.sendFile(path.join(clientDist, "index.html"));
+});
+
+app.listen(port, "0.0.0.0", () => {
   // Log a message confirming server started.
   console.log(`Server running on port: ${port}`);
 });
