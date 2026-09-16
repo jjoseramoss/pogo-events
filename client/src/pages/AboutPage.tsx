@@ -20,25 +20,24 @@ export default function AboutPage() {
         <br />a little easier to find.
       </h1>
       <p className="mt-6 max-w-xl text-lg leading-8 text-muted">
-        PoGo Scout is a small fan-made project by Jose, a Pokémon GO player
-        building a simpler way to keep up with the game and share it with
-        friends.
+        PoGo Scout helps you keep up with Pokémon GO events and find a reason to
+        head outside. Made by Jose, a fellow player, to share with friends and
+        anyone who enjoys the game.
       </p>
       <div className="my-9 h-1 w-14 rounded-full bg-gold" aria-hidden="true" />
       <p className="max-w-xl leading-7 text-muted">
-        Browse event cards, find something that catches your eye, and follow the
-        details on LeekDuck. The goal is simple: spend less time searching for
-        what’s happening and more time enjoying it.
+        See what’s happening now and what’s coming up, filter by the categories
+        you enjoy, and check each event’s dates. Follow the link to LeekDuck for
+        the full details.
       </p>
       <p className="mt-5 max-w-xl leading-7 text-muted">
-        This is still growing. Personalized filters and optional email updates
-        are planned for later; today, it starts with the event feed.
+        Found something you don’t want to miss? Download a start reminder for an
+        upcoming event and add it to your calendar.
       </p>
       <p className="mt-7 max-w-lg text-sm leading-6 text-muted">
         Event data is provided by LeekDuck through ScrapedDuck. This is an
         independent fan project, not an official Pokémon GO service.
       </p>
-      {/* Learning task for Jose: connect this button to the home/events route. */}
       <Link
         to="/"
         className="mt-9 inline-flex min-h-12 items-center gap-3 rounded-xl bg-ink px-7 py-3 font-semibold text-paper transition-colors hover:bg-accent-ink"
