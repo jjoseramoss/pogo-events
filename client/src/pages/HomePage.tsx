@@ -226,13 +226,21 @@ export default function HomePage() {
                     <span className="text-sm">
                       End: {formatEventDate(event.end)}
                     </span>
-                    <a
-                      href={event.link}
-                      className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
-                      aria-label={`Read details for ${event.name} on LeekDuck`}
-                    >
-                      Event details <span aria-hidden="true">↗</span>
-                    </a>
+                    <div className="flex justify-between mt-auto">
+                      <a
+                        href={event.link}
+                        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
+                        aria-label={`Read details for ${event.name} on LeekDuck`}
+                      >
+                        Event details <span aria-hidden="true">↗</span>
+                      </a>
+                      <a
+                        href="/"
+                        className="mt-auto inline-flex items-center gap-2 self-start pt-6 text-sm font-bold text-accent-ink underline-offset-4 hover:underline"
+                      >
+                        Add start reminder <span aria-hidden="true">📅</span>
+                      </a>
+                    </div>
                   </div>
                 </article>
               ))}
